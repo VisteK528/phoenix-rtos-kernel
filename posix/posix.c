@@ -179,7 +179,6 @@ void posix_findProcsNChildren(soi_list_of_processes_t* list, int N){
             ++i;
         }
 
-        // move to the next descriptor
         process = lib_treeof(process_info_t, linkage, lib_rbNext(&process->linkage));
     }
     list->numberOfProcesses = i;
