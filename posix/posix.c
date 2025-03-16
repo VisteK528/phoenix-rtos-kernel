@@ -112,6 +112,83 @@ void pinfo_put(process_info_t *p)
 }
 
 
+static int posix_countChildren(process_info_t* process) {
+    process_info_t* child;
+    int childrenCount = 0;
+
+    // descriptor lock
+    proc_lockSet(&process->lock);
+
+    if(process-> children != NULL) {
+        child = process->children;
+        do {
+            ++childrenCount;
+            child = child->next;
+        }while(child != process->children);
+    }
+
+    // descriptor unlock
+    proc_lockClear(&process->lock);
+    return childrenCount;
+}
+
+int posix_maxChildren(pid_t* whoMaxChildren) {
+    process_info_t *process;
+    int maxChildren = -1;
+    *whoMaxChildren = 0;
+
+    // lock descriptors tree
+    proc_lockSet(&posix_common.lock);
+
+    // get first descriptor
+    process = lib_treeof(process_info_t, linkage, lib_rbMinimum(posix_common.pid.root));
+
+    while (process != NULL) { // descriptor exist
+        int children = posix_countChildren(process);
+        if (children > maxChildren) {
+            maxChildren = children;
+            *whoMaxChildren = process->process;
+        }
+
+
+        // move to the next descriptor
+        process = lib_treeof(process_info_t, linkage, lib_rbNext(&process->linkage));
+    }
+
+    // unlock descriptors tree
+    proc_lockClear(&posix_common.lock);
+    return maxChildren;
+}
+
+void posix_findProcsNChildren(soi_list_of_processes_t* list, int N){
+    process_info_t *process;
+
+    // lock descriptors tree
+    proc_lockSet(&posix_common.lock);
+
+    // get first descriptor
+    process = lib_treeof(process_info_t, linkage, lib_rbMinimum(posix_common.pid.root));
+
+    int i = 0;
+    while (process != NULL && i < list->arrayLength) { // descriptor exist
+        int children = posix_countChildren(process);
+
+        if(children > N) {
+            list->pids[i] = process->process;
+            list->numberOfChildren[i] = children;
+            ++i;
+        }
+
+        // move to the next descriptor
+        process = lib_treeof(process_info_t, linkage, lib_rbNext(&process->linkage));
+    }
+    list->numberOfProcesses = i;
+
+    // unlock descriptors tree
+    proc_lockClear(&posix_common.lock);
+}
+
+
 int posix_fileDeref(open_file_t *f)
 {
 	int err = EOK;

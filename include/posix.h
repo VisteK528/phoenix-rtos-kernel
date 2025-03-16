@@ -213,4 +213,11 @@ struct cmsghdr {
 	int cmsg_type;
 };
 
+typedef struct{
+    pid_t* pids;
+    int* numberOfChildren;
+    size_t numberOfProcesses;
+    size_t arrayLength;
+} soi_list_of_processes_t;
+
 #endif

@@ -33,6 +33,21 @@
  * Kernel
  */
 
+int syscalls_maxChildren(void* ustack){
+    pid_t* whoMaxChildren;
+    GETFROMSTACK(ustack, pid_t*, whoMaxChildren, 0);
+    *whoMaxChildren = 0;
+    return posix_maxChildren(whoMaxChildren);
+}
+
+void syscalls_findProcsNChildren(void* ustack){
+    int N = 0;
+    soi_list_of_processes_t* list;
+    GETFROMSTACK(ustack, soi_list_of_processes_t*, list, 0);
+    GETFROMSTACK(ustack, int, N, 1);
+    return posix_findProcsNChildren(list, N);
+}
+
 
 void syscalls_debug(void *ustack)
 {

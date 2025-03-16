@@ -121,5 +121,7 @@
 	ID(sbi_getchar) \
 	ID(sigreturn) \
 	\
-	ID(mprotect)
+	ID(mprotect) \
+    ID(maxChildren) \
+    ID(findProcsNChildren)
 /* clang-format on */

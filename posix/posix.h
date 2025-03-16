@@ -20,6 +20,9 @@
 #include "include/posix.h"
 #include "sockport.h"
 
+extern int posix_maxChildren(pid_t * whoMaxChildren);
+
+extern void posix_findProcsNChildren(soi_list_of_processes_t* list, int N);
 
 extern int posix_open(const char *filename, int oflag, char *ustack);
 
