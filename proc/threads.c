@@ -25,6 +25,8 @@
 #include "msg.h"
 #include "ports.h"
 
+extern int baseQuanta;
+
 /* Special empty queue value used to wakeup next enqueued thread. This is used to implement sticky conditions */
 static thread_t *const wakeupPending = (void *)-1;
 
@@ -553,34 +555,44 @@ int _threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 	hal_lockScheduler();
 
 	current = _proc_current();
-	threads_common.current[hal_cpuGetID()] = NULL;
 
-	/* Save current thread context */
-	if (current != NULL) {
-		current->context = context;
+	if( current == NULL || current->state != READY || --current->currentQuanta <= 0)
+	{
+		threads_common.current[hal_cpuGetID()] = NULL;
 
-		/* Move thread to the end of queue */
-		if (current->state == READY) {
-			LIST_ADD(&threads_common.ready[current->priority], current);
-			_perf_preempted(current);
-		}
-	}
+		/* Save current thread context */
+		if (current != NULL) {
+			current->context = context;
 
-	/* Get next thread */
-	for (i = 0; i < sizeof(threads_common.ready) / sizeof(thread_t *);) {
-		if ((selected = threads_common.ready[i]) == NULL) {
-			i++;
-			continue;
+			/* Move thread to the end of queue */
+			if (current->state == READY) {
+				LIST_ADD(&threads_common.ready[current->priority], current);
+				_perf_preempted(current);
+			}
 		}
 
-		LIST_REMOVE(&threads_common.ready[i], selected);
+		/* Get next thread */
+		for (i = 0; i < sizeof(threads_common.ready) / sizeof(thread_t *);) {
+			if ((selected = threads_common.ready[i]) == NULL) {
+				i++;
+				continue;
+			}
 
-		if (!selected->exit || hal_cpuSupervisorMode(selected->context))
-			break;
+			LIST_REMOVE(&threads_common.ready[i], selected);
 
-		selected->state = GHOST;
-		LIST_ADD(&threads_common.ghosts, selected);
-		_proc_threadWakeup(&threads_common.reaper);
+			if (!selected->exit || hal_cpuSupervisorMode(selected->context))
+			{
+				if( selected->process == NULL)
+					selected->currentQuanta = 1;
+				else
+					selected->currentQuanta = baseQuanta + selected->process->quanta;
+				break;
+			}
+
+			selected->state = GHOST;
+			LIST_ADD(&threads_common.ghosts, selected);
+			_proc_threadWakeup(&threads_common.reaper);
+		}
 	}
 
 	LIB_ASSERT(selected != NULL, "no threads to schedule");
@@ -730,6 +742,8 @@ int proc_threadCreate(process_t *process, void (*start)(void *), unsigned int *i
 		return -ENOMEM;
 	}
 	hal_memset(t->kstack, 0xba, t->kstacksz);
+
+	t->currentQuanta = 0;
 
 	t->state = READY;
 	t->wakeup = 0;

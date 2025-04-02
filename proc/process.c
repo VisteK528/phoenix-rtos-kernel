@@ -57,6 +57,45 @@ struct {
 	int idcounter;
 } process_common;
 
+int baseQuanta;
+
+int proc_setBaseQuanta(int quanta){
+    if(quanta < 1 || quanta > 100){
+        return 0;
+    }
+    baseQuanta = quanta;
+    return 1;
+}
+
+int proc_getBaseQuanta(){
+    return baseQuanta;
+}
+
+int proc_setQuanta(int pid, int quanta){
+    if(quanta < 0 || quanta > 100){
+        return 0;
+    }
+
+    process_t* process = proc_find(pid);
+    if(process == NULL){
+        return 0;
+    }
+    process->quanta = quanta;
+    proc_put(process);
+    return 1;
+}
+
+int proc_getQuanta(int pid){
+    int quanta = -1;
+    process_t* process = proc_find(pid);
+    if(process == NULL){
+        return 0;
+    }
+    quanta = process->quanta;
+    proc_put(process);
+    return quanta;
+}
+
 
 process_t *proc_find(int pid)
 {
@@ -185,6 +224,8 @@ int proc_start(void (*initthr)(void *), void *arg, const char *path)
 			return -ENOMEM;
 		}
 	}
+
+    process->quanta = 1;
 
 	process->argv = NULL;
 	process->envp = NULL;
@@ -1680,6 +1721,8 @@ int _process_init(vm_map_t *kmap, vm_object_t *kernel)
 
 	hal_exceptionsSetHandler(EXC_DEFAULT, process_exception);
 	hal_exceptionsSetHandler(EXC_UNDEFINED, process_illegal);
+
+    baseQuanta = 1;
 	return EOK;
 }
 

@@ -72,6 +72,8 @@ typedef struct _process_t {
 
 	void *got;
 	hal_tls_t tls;
+
+    int quanta;
 } process_t;
 
 
@@ -79,6 +81,11 @@ static inline int process_getPid(process_t *process)
 {
 	return process->idlinkage.id;
 }
+
+extern int proc_setBaseQuanta(int quanta);
+extern int proc_getBaseQuanta();
+extern int proc_setQuanta(int pid, int quanta);
+extern int proc_getQuanta(int pid);
 
 
 extern process_t *proc_find(int pid);

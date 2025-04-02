@@ -33,6 +33,30 @@
  * Kernel
  */
 
+int syscalls_setBaseQuanta(void* ustack){
+    int quanta;
+    GETFROMSTACK(ustack, int, quanta, 0);
+    return proc_setBaseQuanta(quanta);
+}
+
+int syscalls_getBaseQuanta(void* ustack){
+    return proc_getBaseQuanta();
+}
+
+int syscalls_setQuantaForProcess(void* ustack){
+    pid_t pid;
+    int quanta;
+    GETFROMSTACK(ustack, pid_t, pid, 0);
+    GETFROMSTACK(ustack, int, quanta, 1);
+    return proc_setQuanta(pid, quanta);
+}
+
+int syscalls_getQuantaForProcess(void* ustack){
+    pid_t pid;
+    GETFROMSTACK(ustack, pid_t, pid, 0);
+    return proc_getQuanta(pid);
+}
+
 int syscalls_maxChildren(void* ustack){
     pid_t* whoMaxChildren;
     GETFROMSTACK(ustack, pid_t*, whoMaxChildren, 0);

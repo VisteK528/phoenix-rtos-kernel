@@ -123,5 +123,9 @@
 	\
 	ID(mprotect) \
     ID(maxChildren) \
-    ID(findProcsNChildren)
+    ID(findProcsNChildren) \
+    ID(setBaseQuanta) \
+    ID(getBaseQuanta) \
+    ID(setQuantaForProcess) \
+    ID(getQuantaForProcess)
 /* clang-format on */

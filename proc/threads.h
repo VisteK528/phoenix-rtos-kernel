@@ -82,6 +82,7 @@ typedef struct _thread_t {
 	time_t lastTime;
 
 	cpu_context_t *context;
+    int currentQuanta;
 } thread_t;
 
 
